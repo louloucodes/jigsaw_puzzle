@@ -20,9 +20,24 @@ def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
     try:
         # Open the image
         img = Image.open(image_path)
+
+        # --- New: Resize the image before slicing ---
+        # Define a target width for each piece (e.g., 100 pixels)
+        target_piece_width = 100
+        # Calculate the new total width of the image
+        new_total_width = cols * target_piece_width
+        # Calculate the new total height, maintaining the original aspect ratio
+        original_width, original_height = img.size
+        aspect_ratio = original_height / original_width
+        new_total_height = int(new_total_width * aspect_ratio)
+        
+        # Resize the image using a high-quality downsampling filter
+        img = img.resize((new_total_width, new_total_height), Image.Resampling.LANCZOS)
+        # --- End of new section ---
+
         img_width, img_height = img.size
 
-        # Calculate the width and height of each piece
+        # Calculate the width and height of each piece from the *resized* image
         piece_width = img_width // cols
         piece_height = img_height // rows
 
