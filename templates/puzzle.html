@@ -14,15 +14,15 @@
     <!-- New container to hold the tray and board side-by-side -->
     <div id="game-container">
         <!-- This div will hold the scrambled puzzle pieces -->
-        <div id="pieces-tray"></div>
+        <div id="pieces-tray">
+            <!-- Moved: Completion Message is now inside the pieces tray -->
+            <div id="completion-message">
+                <h2>🥳 Congratulations! Puzzle Complete! 🥳</h2>
+            </div>
+        </div>
 
         <!-- This div will hold the empty slots for the puzzle board -->
         <div id="puzzle-board"></div>
-    </div>
-
-    <!-- New: Completion Message -->
-    <div id="completion-message">
-        <h2>🥳 Congratulations! Puzzle Complete! 🥳</h2>
     </div>
 
     <!-- Pass Flask variables to JavaScript by embedding them in data attributes -->

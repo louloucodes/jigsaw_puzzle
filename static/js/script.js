@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // --- New: Handle page reload ---
+    // Check the navigation type. If the user reloaded the page, redirect to the home page.
+    const navigationEntries = performance.getEntriesByType("navigation");
+    if (navigationEntries.length > 0 && navigationEntries[0].type === 'reload') {
+        // Redirect to the home page for image selection
+        window.location.href = '/';
+        return; // Stop further execution of the script
+    }
+
     // --- CONFIGURATION ---
-    // Get config from the script tag's data attributes
     const configScript = document.getElementById('puzzle-config');
     const ROWS = parseInt(configScript.dataset.rows);
     const COLS = parseInt(configScript.dataset.cols);
@@ -12,13 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const puzzleBoard = document.getElementById('puzzle-board');
     const piecesTray = document.getElementById('pieces-tray');
 
-    // --- DYNAMIC SIZING ---
-    // This is the single source of truth for sizing.
-    // It calculates piece size based on the available space for the board.
-    const containerWidth = gameContainer.offsetWidth;
-    const boardContainerWidth = (containerWidth / 2) - 40; // Account for gaps/padding
-    const PIECE_WIDTH = boardContainerWidth / COLS;
-    let PIECE_HEIGHT; // Will be set after the first image loads to get the aspect ratio.
+    // --- DYNAMIC SIZING (New, Viewport-Aware Logic) ---
+    let PIECE_WIDTH;
+    let PIECE_HEIGHT;
 
     // --- STATE ---
     let correctlyPlacedPieces = 0;
@@ -131,24 +135,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const tempImg = new Image();
     tempImg.src = `/output/piece_0_0.png`; // Load the first piece to check aspect ratio
     tempImg.onload = () => {
-        // 1. Calculate the final PIECE_HEIGHT
         const aspectRatio = tempImg.height / tempImg.width;
-        PIECE_HEIGHT = PIECE_WIDTH * aspectRatio;
+
+        // --- New Sizing Calculation ---
+        // 1. Get available space. Each column (tray/board) gets half the container width.
+        const containerWidth = gameContainer.offsetWidth;
+        const availableWidth = (containerWidth / 2) - 40; // Space for one grid (board or tray)
+
+        // 2. Get available height (viewport height minus some margin for titles, etc.)
+        const availableHeight = window.innerHeight - 150;
+
+        // 3. Calculate the size of the puzzle if it were constrained by width
+        const widthConstrainedPieceWidth = availableWidth / COLS;
+        const widthConstrainedTotalHeight = ROWS * (widthConstrainedPieceWidth * aspectRatio);
+
+        // 4. Calculate the size of the puzzle if it were constrained by height
+        const heightConstrainedTotalHeight = availableHeight;
+        const heightConstrainedPieceHeight = heightConstrainedTotalHeight / ROWS;
+        const heightConstrainedPieceWidth = heightConstrainedPieceHeight / aspectRatio;
+
+        // 5. Choose the smaller of the two sizes to ensure it fits in both dimensions.
+        if (widthConstrainedTotalHeight <= availableHeight) {
+            // Width is the limiting factor, or it fits perfectly.
+            PIECE_WIDTH = widthConstrainedPieceWidth;
+            PIECE_HEIGHT = PIECE_WIDTH * aspectRatio;
+        } else {
+            // Height is the limiting factor (this happens with portrait images).
+            PIECE_WIDTH = heightConstrainedPieceWidth;
+            PIECE_HEIGHT = heightConstrainedPieceHeight;
+        }
         
-        // 2. Set the dimensions of the board container
-        puzzleBoard.style.width = `${COLS * PIECE_WIDTH}px`;
-        puzzleBoard.style.height = `${ROWS * PIECE_HEIGHT}px`;
+        // 6. Now that all sizes are known, set up the grid and create the pieces.
+        const totalWidth = COLS * PIECE_WIDTH;
+        const totalHeight = ROWS * PIECE_HEIGHT;
+
+        puzzleBoard.style.width = `${totalWidth}px`;
+        puzzleBoard.style.height = `${totalHeight}px`;
         puzzleBoard.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
         puzzleBoard.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
         
-        // --- Corrected: Make the tray dimensions match the board ---
-        // The tray will have the same grid structure as the board to ensure it has the same size.
-        piecesTray.style.width = `${COLS * PIECE_WIDTH}px`;
-        piecesTray.style.height = `${ROWS * PIECE_HEIGHT}px`;
+        piecesTray.style.width = `${totalWidth}px`;
+        piecesTray.style.height = `${totalHeight}px`;
         piecesTray.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
         piecesTray.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
 
-        // 3. Now that all sizes are known, create and display the puzzle pieces.
         initializePuzzle();
     };
 });

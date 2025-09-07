@@ -5,16 +5,24 @@ This web application allows users to upload an image and turn it into a playable
 ## Caveat emptor
 *Copilot wrote this!*
 
-![Puzzle in Progress](static/images/puzzle_in_progress.png)
+| 1. Setup Screen | 2. Puzzle Start | 3. In Progress | 4. Puzzle Complete |
+| :---: | :---: | :---: | :---: |
+| ![Setup Screen](static/images/setup_screen_small.png) | ![Puzzle Start](static/images/puzzle_start_small.png) | ![Puzzle In Progress](static/images/puzzle_in_progress_small.png) | ![Puzzle Complete](static/images/puzzle_complete_small.png) |
+
 
 ## 🎯 MVP Features
 
-The goal of the Minimum Viable Product (MVP) is to deliver the core functionality with a clean interface.
+The goal of the Minimum Viable Product (MVP) is to deliver the core functionality with a clean and responsive interface.
 
 -   **Image Upload:** Users can upload a JPG, PNG, or HEIC image from their computer.
 -   **Automatic Slicing:** The backend automatically slices the uploaded image into a user-defined grid of puzzle pieces.
 -   **Interactive Puzzle Board:** A simple drag-and-drop interface where users can solve the puzzle.
 -   **Snap-to-Grid:** Pieces snap into the correct position on the board.
+
+## ✨ New Features
+-   **Dynamic Layout:** The puzzle board and piece tray automatically resize to fit the browser window, ensuring the entire puzzle is always visible without scrolling for both landscape and portrait images.
+-   **Seamless Completion:** Upon solving, the beveled pieces and grid lines fade away to reveal the seamless, original image, and a completion message appears in the piece tray.
+-   **Reload to Restart:** Reloading the puzzle page redirects the user to the home screen to select a new image.
 
 ## 💻 Technology Stack
 

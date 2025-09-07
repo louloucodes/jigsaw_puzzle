@@ -22,18 +22,26 @@ def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
         # Open the image
         img = Image.open(image_path)
 
-        # --- Updated: Resize the image to a fixed total width ---
-        # Define a target width for the entire puzzle (e.g., 800 pixels)
-        target_puzzle_width = 800
-        
-        # Calculate the new total height, maintaining the original aspect ratio
+        # --- New: Resize the image to fit within a bounding box ---
+        max_dimension = 800
         original_width, original_height = img.size
-        aspect_ratio = original_height / original_width
-        new_total_height = int(target_puzzle_width * aspect_ratio)
-        
-        # Resize the image using a high-quality downsampling filter
-        img = img.resize((target_puzzle_width, new_total_height), Image.Resampling.LANCZOS)
-        # --- End of updated section ---
+
+        # Determine if we need to resize
+        if original_width > max_dimension or original_height > max_dimension:
+            if original_width > original_height:
+                # Landscape or square image: scale based on width
+                new_width = max_dimension
+                aspect_ratio = original_height / original_width
+                new_height = int(new_width * aspect_ratio)
+            else:
+                # Portrait image: scale based on height
+                new_height = max_dimension
+                aspect_ratio = original_width / original_height
+                new_width = int(new_height * aspect_ratio)
+            
+            # Resize the image using a high-quality downsampling filter
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        # --- End of new section ---
 
         img_width, img_height = img.size
 

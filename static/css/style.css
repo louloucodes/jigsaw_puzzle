@@ -42,7 +42,7 @@ h1 {
     padding: 10px;
     display: grid;
     gap: 10px;
-    /* Remove fixed width and scrolling */
+    position: relative; /* Make this a positioning context for the message */
     /* Size will be determined by its content, which is sized by JS */
 }
 
@@ -51,12 +51,32 @@ h1 {
     background-color: transparent;
 }
 
-/* New: Styles for the completion message */
+/* Updated: Styles for the completion message inside the tray */
 #completion-message {
-    display: none; /* Hidden by default */
-    text-align: center;
-    margin-top: 20px;
+    position: absolute; /* Position relative to the pieces-tray */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Use flexbox to center the content within the message div */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    background-color: rgba(240, 240, 240, 0.95); /* Light background to match page */
+    
     color: #2c8f2c;
+    text-align: center;
+    
+    opacity: 0; /* Start invisible */
+    pointer-events: none; /* Don't block mouse events when invisible */
+    transition: opacity 0.5s ease-in-out 0.5s; /* Fade in after a 0.5s delay */
+    z-index: 100; /* Ensure it's on top of the faded pieces/placeholders */
+}
+
+#completion-message h2 {
+    margin: 0; /* Remove default margin from h2 for better centering */
 }
 
 /* This class is for the empty placeholder divs on the puzzle board.
@@ -91,8 +111,9 @@ h1 {
 /* --- Styles for Completion --- */
 
 /* When the puzzle is complete, show the message */
-#game-container.puzzle-complete + #completion-message {
-    display: block;
+#game-container.puzzle-complete #completion-message {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* When the puzzle is complete, the board's border and background are removed */
