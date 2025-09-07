@@ -1,0 +1,94 @@
+/* This styles our main puzzle board. */
+#puzzle-board {
+    border: 5px solid #333;
+    background-color: #ccc;
+    display: grid;
+    transition: border-color 0.5s ease-in-out, background-color 0.5s ease-in-out, gap 0.5s ease-in-out;
+}
+
+/* This styles the area for the scrambled pieces. */
+#pieces-tray {
+    border: 2px dashed #666;
+    padding: 10px;
+    display: grid;
+    gap: 10px;
+    position: relative; /* Positioning context for the completion message */
+}
+
+/* Placeholder for used pieces in the tray */
+.tray-placeholder {
+    background-color: transparent;
+}
+
+/* This class is for the empty placeholder divs on the puzzle board. */
+.piece-slot {
+    border: 1px solid #999;
+    background-color: #ddd;
+    transition: border-color 0.5s ease-in-out, background-color 0.5s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+/* This class is for the actual, draggable image pieces. */
+.puzzle-piece {
+    cursor: grab;
+    transition: opacity 0.8s ease-in-out;
+}
+
+.puzzle-piece:active {
+    cursor: grabbing;
+}
+
+/* --- Styles for Completion --- */
+
+#completion-message {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(240, 240, 240, 0.95);
+    color: #2c8f2c;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out 0.5s;
+    z-index: 100;
+}
+
+#completion-message h2 {
+    margin: 0;
+}
+
+#game-container.puzzle-complete #completion-message {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#game-container.puzzle-complete #puzzle-board {
+    border-color: transparent;
+    background-color: transparent;
+    gap: 0;
+}
+
+#game-container.puzzle-complete .piece-slot {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+.final-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+}
+
+.final-image-overlay.visible {
+    opacity: 1;
+}

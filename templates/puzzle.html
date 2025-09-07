@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jigsaw Puzzle</title>
-    <!-- Link to our CSS file -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Link to our CSS files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/puzzle.css') }}">
 </head>
 <body>
 
@@ -32,6 +33,7 @@
         data-rows="{{ rows }}"
         data-cols="{{ cols }}"
         data-image-filename="{{ image_filename }}"
+        type="module"
     ></script>
 </body>
 </html>
