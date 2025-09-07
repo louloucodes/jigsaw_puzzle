@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const configScript = document.getElementById('puzzle-config');
     const ROWS = parseInt(configScript.dataset.rows);
     const COLS = parseInt(configScript.dataset.cols);
+    // --- New: Get the original image filename ---
+    const IMAGE_FILENAME = configScript.dataset.imageFilename;
     
     // --- DOM ELEMENTS ---
     const gameContainer = document.getElementById('game-container');
@@ -101,18 +103,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Puzzle Completion Handler ---
+    // --- Puzzle Completion Handler (New, Simpler Logic) ---
     function handlePuzzleCompletion() {
         console.log("Congratulations! Puzzle Complete!");
         gameContainer.classList.add('puzzle-complete');
         
-        const slots = puzzleBoard.getElementsByClassName('piece-slot');
-        for (const slot of slots) {
-            const piece = slot.getElementsByTagName('img')[0];
-            if (piece) {
-                piece.src = piece.src.replace('.png', '_flat.png');
-            }
-        }
+        // 1. Create a new image element for the final, complete image.
+        const finalImage = new Image();
+        finalImage.src = `/uploads/${IMAGE_FILENAME}`; // Use the original uploaded image
+        finalImage.className = 'final-image-overlay';
+
+        // 2. Make the puzzle board a positioning context for the overlay.
+        puzzleBoard.style.position = 'relative';
+        
+        // 3. Add the final image to the puzzle board. It will be invisible at first.
+        puzzleBoard.appendChild(finalImage);
+
+        // 4. Use a timeout to trigger the fade-in effect.
+        setTimeout(() => {
+            finalImage.classList.add('visible');
+        }, 10);
     }
 
     // --- INITIALIZATION ---

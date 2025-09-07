@@ -55,16 +55,22 @@ def upload_file():
         # Call our slicer function to process the image
         slice_image(image_path, app.config['OUTPUT_FOLDER'], rows, cols)
 
-        # Redirect to the puzzle page, passing the grid size
-        return redirect(url_for('puzzle', rows=rows, cols=cols))
+        # --- Updated: Pass the original filename to the puzzle route ---
+        return redirect(url_for('puzzle', rows=rows, cols=cols, filename=filename))
 
     return redirect(request.url) # Redirect if file type is not allowed
 
-@app.route('/puzzle/<int:rows>/<int:cols>')
-def puzzle(rows, cols):
-    """Renders the puzzle page with the specified grid size."""
-    # Pass the rows and cols to the template so JavaScript can use them
-    return render_template('puzzle.html', rows=rows, cols=cols)
+# --- Updated: The puzzle route now accepts the filename ---
+@app.route('/puzzle/<int:rows>/<int:cols>/<path:filename>')
+def puzzle(rows, cols, filename):
+    """Renders the puzzle page, passing config and the original image filename."""
+    return render_template('puzzle.html', rows=rows, cols=cols, image_filename=filename)
+
+# --- New: Add a route to serve the original uploaded images ---
+@app.route('/uploads/<path:filename>')
+def get_upload_file(filename):
+    """Serves files from the 'uploads' directory."""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/output/<path:filename>')
 def get_output_file(filename):

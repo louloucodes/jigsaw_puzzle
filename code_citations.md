@@ -64,3 +64,16 @@ lang="en">
     <title>Jigsaw Puzzle Generator</title>
     <
 ```
+# Code Citations
+
+## License: unknown
+https://github.com/midhunks6460/jigsaw-app/blob/eb60132f8a8f5b8d9126578767000c52a8406be4/jigsaw/templates/index.html
+
+```
+>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jigsaw Puzzle</title
+```
