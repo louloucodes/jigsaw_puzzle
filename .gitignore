@@ -17,7 +17,7 @@ env/
 # which should not be tracked by Git.
 uploads/
 output/
-images/ 
+
 
 # Installer logs
 pip-log.txt
@@ -25,3 +25,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 htmlcov/
+
+# Personal images
+*.HEIC
+*.heic
