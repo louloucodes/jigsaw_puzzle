@@ -50,7 +50,6 @@ function handlePuzzleCompletion(config) {
 document.addEventListener('DOMContentLoaded', function() {
     // --- FIX: More robust check for page reload ---
     const navEntries = performance.getEntriesByType("navigation");
-    // If there's an entry and its type is 'reload', redirect to home.
     if (navEntries.length > 0 && navEntries[0].type === 'reload') {
         window.location.href = '/';
         return; // Stop further execution
@@ -58,30 +57,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- CONFIGURATION ---
     const configScript = document.getElementById('puzzle-config');
-    const config = {
-        ROWS: parseInt(configScript.dataset.rows),
-        COLS: parseInt(configScript.dataset.cols),
-        IMAGE_FILENAME: configScript.dataset.imageFilename,
-        gameContainer: document.getElementById('game-container'),
-        puzzleBoard: document.getElementById('puzzle-board'),
-        piecesTray: document.getElementById('pieces-tray')
-    };
-    
-    // --- New: Cheat Mode Logic ---
-    const cheatToggle = document.getElementById('cheat-toggle');
-    const cheatImage = new Image();
-    cheatImage.src = `/uploads/${config.IMAGE_FILENAME}`;
-    cheatImage.className = 'cheat-image-bg';
-    config.puzzleBoard.appendChild(cheatImage); // Add the hidden image to the board
 
-    cheatToggle.addEventListener('change', () => {
-        if (cheatToggle.checked) {
-            config.puzzleBoard.classList.add('cheat-mode-on');
-        } else {
-            config.puzzleBoard.classList.remove('cheat-mode-on');
-        }
-    });
-    
-    // Start the puzzle setup process
-    setupPuzzle(config);
+    // --- FIX: Only run puzzle logic if we are on the puzzle page ---
+    if (configScript) {
+        const config = {
+            ROWS: parseInt(configScript.dataset.rows),
+            COLS: parseInt(configScript.dataset.cols),
+            IMAGE_FILENAME: configScript.dataset.imageFilename,
+            gameContainer: document.getElementById('game-container'),
+            puzzleBoard: document.getElementById('puzzle-board'),
+            piecesTray: document.getElementById('pieces-tray')
+        };
+        
+        // --- Cheat Mode Logic ---
+        const cheatToggle = document.getElementById('cheat-toggle');
+        const cheatImage = new Image();
+        cheatImage.src = `/uploads/${config.IMAGE_FILENAME}`;
+        cheatImage.className = 'cheat-image-bg';
+        config.puzzleBoard.appendChild(cheatImage);
+
+        cheatToggle.addEventListener('change', () => {
+            config.puzzleBoard.classList.toggle('cheat-mode-on');
+        });
+        
+        // Start the puzzle setup process
+        setupPuzzle(config);
+    }
 });
