@@ -11,6 +11,14 @@ h1 {
     color: #333;
 }
 
+/* New style for the main game container */
+#game-container {
+    display: flex;
+    flex-direction: row; /* Arrange children (tray and board) side-by-side */
+    align-items: flex-start; /* Align items to the top */
+    gap: 20px; /* Add some space between the tray and the board */
+}
+
 /* This styles our main puzzle board. 
    'display: grid' is the most important part; it turns the div into a grid container 
    that our JavaScript will later populate with rows and columns. */
@@ -25,11 +33,12 @@ h1 {
    We also set it to 'display: grid' to neatly arrange the pieces. */
 #pieces-tray {
     border: 2px dashed #666;
-    margin-top: 20px;
     padding: 10px;
     display: grid;
     gap: 10px;
-    /* The grid-template-columns will be set by JavaScript */
+    /* The grid-template-columns will be set by JavaScript to be a narrow column */
+    max-height: 80vh; /* Set a max height to prevent page scrolling */
+    overflow-y: auto; /* Allow vertical scrolling within the tray if needed */
 }
 
 /* This class is for the empty placeholder divs on the puzzle board.

@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
             puzzleBoard.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
             puzzleBoard.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
 
-            piecesTray.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+            // Change the pieces tray to have a 2-column grid
+            piecesTray.style.gridTemplateColumns = `repeat(2, 1fr)`;
         };
     }
 

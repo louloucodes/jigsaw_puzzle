@@ -11,13 +11,14 @@
 
     <h1>Jigsaw Puzzle</h1>
 
-    <!-- This div will hold the empty slots for the puzzle board -->
-    <div id="puzzle-board"></div>
+    <!-- New container to hold the tray and board side-by-side -->
+    <div id="game-container">
+        <!-- This div will hold the scrambled puzzle pieces -->
+        <div id="pieces-tray"></div>
 
-    <hr>
-
-    <!-- This div will hold the scrambled puzzle pieces -->
-    <div id="pieces-tray"></div>
+        <!-- This div will hold the empty slots for the puzzle board -->
+        <div id="puzzle-board"></div>
+    </div>
 
     <!-- Pass Flask variables to JavaScript by embedding them in data attributes -->
     <script 
