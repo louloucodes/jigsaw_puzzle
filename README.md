@@ -2,6 +2,9 @@
 
 This web application allows users to upload an image and turn it into a playable jigsaw puzzle directly in their browser. This project is designed to be a simple, fun demonstration of web development with Python and Flask.
 
+## Caveat emptor
+*Copilot wrote this!*
+
 ![Puzzle in Progress](static/images/puzzle_in_progress.png)
 
 ## 🎯 MVP Features
