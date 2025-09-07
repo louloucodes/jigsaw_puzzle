@@ -67,6 +67,21 @@ document.addEventListener('DOMContentLoaded', function() {
         piecesTray: document.getElementById('pieces-tray')
     };
     
+    // --- New: Cheat Mode Logic ---
+    const cheatToggle = document.getElementById('cheat-toggle');
+    const cheatImage = new Image();
+    cheatImage.src = `/uploads/${config.IMAGE_FILENAME}`;
+    cheatImage.className = 'cheat-image-bg';
+    config.puzzleBoard.appendChild(cheatImage); // Add the hidden image to the board
+
+    cheatToggle.addEventListener('change', () => {
+        if (cheatToggle.checked) {
+            config.puzzleBoard.classList.add('cheat-mode-on');
+        } else {
+            config.puzzleBoard.classList.remove('cheat-mode-on');
+        }
+    });
+    
     // Start the puzzle setup process
     setupPuzzle(config);
 });

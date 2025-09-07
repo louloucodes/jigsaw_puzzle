@@ -9,8 +9,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/puzzle.css') }}">
 </head>
 <body>
-
     <h1>Jigsaw Puzzle</h1>
+
+    <!-- New: Controls for the puzzle -->
+    <div class="puzzle-controls">
+        <label for="cheat-toggle">Show Hint</label>
+        <input type="checkbox" id="cheat-toggle">
+    </div>
 
     <!-- New container to hold the tray and board side-by-side -->
     <div id="game-container">
