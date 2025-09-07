@@ -48,11 +48,12 @@ function handlePuzzleCompletion(config) {
 
 // --- Main Execution ---
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle page reload
-    const navigationEntries = performance.getEntriesByType("navigation");
-    if (navigationEntries.length > 0 && navigationEntries[0].type === 'reload') {
+    // --- FIX: More robust check for page reload ---
+    const navEntries = performance.getEntriesByType("navigation");
+    // If there's an entry and its type is 'reload', redirect to home.
+    if (navEntries.length > 0 && navEntries[0].type === 'reload') {
         window.location.href = '/';
-        return;
+        return; // Stop further execution
     }
 
     // --- CONFIGURATION ---
