@@ -10,6 +10,7 @@ pillow_heif.register_heif_opener()
 def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
     """
     Slices an image into a grid of pieces and saves them to an output directory.
+    The image is first resized to a standard puzzle width.
 
     Args:
         image_path (str): The path to the input image.
@@ -21,19 +22,18 @@ def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
         # Open the image
         img = Image.open(image_path)
 
-        # --- New: Resize the image before slicing ---
-        # Define a target width for each piece (e.g., 100 pixels)
-        target_piece_width = 100
-        # Calculate the new total width of the image
-        new_total_width = cols * target_piece_width
+        # --- Updated: Resize the image to a fixed total width ---
+        # Define a target width for the entire puzzle (e.g., 800 pixels)
+        target_puzzle_width = 800
+        
         # Calculate the new total height, maintaining the original aspect ratio
         original_width, original_height = img.size
         aspect_ratio = original_height / original_width
-        new_total_height = int(new_total_width * aspect_ratio)
+        new_total_height = int(target_puzzle_width * aspect_ratio)
         
         # Resize the image using a high-quality downsampling filter
-        img = img.resize((new_total_width, new_total_height), Image.Resampling.LANCZOS)
-        # --- End of new section ---
+        img = img.resize((target_puzzle_width, new_total_height), Image.Resampling.LANCZOS)
+        # --- End of updated section ---
 
         img_width, img_height = img.size
 
@@ -56,7 +56,11 @@ def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
                 # Crop the image to get the piece
                 piece = img.crop((left, top, right, bottom))
 
-                # --- Add a bevel effect to the piece ---
+                # --- New: Save the flat version first ---
+                flat_piece_filename = f"piece_{r}_{c}_flat.png"
+                piece.save(os.path.join(output_dir, flat_piece_filename))
+
+                # --- Add a bevel effect to the piece for gameplay ---
                 draw = ImageDraw.Draw(piece)
                 # Draw light lines on top and left for a highlight effect
                 draw.line([(0, 0), (piece.width, 0)], fill="white", width=2)  # Top
@@ -65,11 +69,11 @@ def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
                 draw.line([(0, piece.height - 1), (piece.width - 1, piece.height - 1)], fill="#808080", width=2) # Bottom
                 draw.line([(piece.width - 1, 0), (piece.width - 1, piece.height - 1)], fill="#808080", width=2) # Right
 
-                # Save the piece with a predictable name
+                # Save the beveled piece with the original name
                 piece_filename = f"piece_{r}_{c}.png"
                 piece.save(os.path.join(output_dir, piece_filename))
         
-        print(f"Successfully sliced image into {rows * cols} pieces.")
+        print(f"Successfully sliced image into {rows * cols} pieces (beveled and flat).")
 
     except FileNotFoundError:
         print(f"Error: The file was not found at '{image_path}'")

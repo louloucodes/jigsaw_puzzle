@@ -4,14 +4,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const configScript = document.getElementById('puzzle-config');
     const ROWS = parseInt(configScript.dataset.rows);
     const COLS = parseInt(configScript.dataset.cols);
-    const PIECE_WIDTH = 100; // Should match target_piece_width in slicer.py
-
+    
     // --- DOM ELEMENTS ---
+    const gameContainer = document.getElementById('game-container');
     const puzzleBoard = document.getElementById('puzzle-board');
     const piecesTray = document.getElementById('pieces-tray');
 
+    // --- DYNAMIC SIZING (New Logic) ---
+    // Calculate the available width for the puzzle board (half the container width minus gaps)
+    const containerWidth = gameContainer.offsetWidth;
+    const boardContainerWidth = (containerWidth / 2) - 40; // Account for gaps/padding
+    const PIECE_WIDTH = boardContainerWidth / COLS;
+    let PIECE_HEIGHT; // Will be set after the first image loads
+
     // --- STATE ---
-    let draggedPiece = null;
+    let correctlyPlacedPieces = 0;
 
     // --- FUNCTIONS ---
 
@@ -19,20 +26,20 @@ document.addEventListener('DOMContentLoaded', function() {
      * Sets the grid layout for the puzzle board and pieces tray based on the configuration.
      */
     function setupGridLayout() {
-        // Calculate the aspect ratio from the first piece to set the board height correctly
         const tempImg = new Image();
-        tempImg.src = `/output/piece_0_0.png`; // Assumes Flask serves the output folder
+        tempImg.src = `/output/piece_0_0.png`;
         tempImg.onload = () => {
             const aspectRatio = tempImg.height / tempImg.width;
-            const pieceHeight = PIECE_WIDTH * aspectRatio;
+            PIECE_HEIGHT = PIECE_WIDTH * aspectRatio;
 
+            // Set board dimensions
             puzzleBoard.style.width = `${COLS * PIECE_WIDTH}px`;
-            puzzleBoard.style.height = `${ROWS * pieceHeight}px`;
+            puzzleBoard.style.height = `${ROWS * PIECE_HEIGHT}px`;
             puzzleBoard.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
             puzzleBoard.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
 
-            // Change the pieces tray to have a 2-column grid
-            piecesTray.style.gridTemplateColumns = `repeat(2, 1fr)`;
+            // Set tray grid layout
+            piecesTray.style.gridTemplateColumns = `repeat(2, ${PIECE_WIDTH}px)`;
         };
     }
 
@@ -58,10 +65,12 @@ document.addEventListener('DOMContentLoaded', function() {
             piece.id = pieceId;
             piece.className = 'puzzle-piece';
             piece.draggable = true;
+            // Dynamically set piece size
+            piece.style.width = `${PIECE_WIDTH}px`;
+            piece.style.height = `${PIECE_HEIGHT}px`;
             
             // Add drag event listeners to the piece
             piece.addEventListener('dragstart', handleDragStart);
-            
             piecesTray.appendChild(piece);
         }
 
@@ -106,22 +115,76 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         
         const draggedPieceId = e.dataTransfer.getData('text/plain');
+        const draggedPiece = document.getElementById(draggedPieceId);
         const dropTarget = e.target;
 
-        // Check if the dropped piece's ID matches the slot's ID
+        // Check if the drop is valid (correct piece in the correct slot)
         if (dropTarget.className === 'piece-slot' && dropTarget.id === draggedPieceId) {
-            const piece = document.getElementById(draggedPieceId);
             
-            // Make the piece no longer draggable and remove it from the tray
-            piece.draggable = false;
+            // --- New: Create and insert a placeholder in the tray ---
+            // Check if the piece came from the tray
+            if (draggedPiece.parentElement.id === 'pieces-tray') {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'tray-placeholder';
+                // --- New: Dynamically size the placeholder ---
+                placeholder.style.width = `${PIECE_WIDTH}px`;
+                placeholder.style.height = `${PIECE_HEIGHT}px`;
+                // Insert the placeholder right before the piece we are moving
+                draggedPiece.parentElement.insertBefore(placeholder, draggedPiece);
+            }
+            
+            // Make the piece no longer draggable
+            draggedPiece.draggable = false;
             
             // Clear the slot and append the piece
             dropTarget.innerHTML = '';
-            dropTarget.appendChild(piece);
+            dropTarget.appendChild(draggedPiece);
+
+            // Check for puzzle completion
+            correctlyPlacedPieces++;
+            if (correctlyPlacedPieces === ROWS * COLS) {
+                handlePuzzleCompletion();
+            }
         }
     }
 
+    // --- New: Puzzle Completion Handler ---
+    /**
+     * Handles the visual changes when the puzzle is successfully completed.
+     */
+    function handlePuzzleCompletion() {
+        console.log("Congratulations! Puzzle Complete!");
+
+        // --- New: Add a class to the main container to trigger CSS transitions ---
+        document.getElementById('game-container').classList.add('puzzle-complete');
+        
+        // Go through each slot on the board
+        const slots = puzzleBoard.getElementsByClassName('piece-slot');
+        for (const slot of slots) {
+            const piece = slot.getElementsByTagName('img')[0];
+            if (piece) {
+                // Swap the image source to the flat version
+                piece.src = piece.src.replace('.png', '_flat.png');
+            }
+        }
+    }
+
+
     // --- INITIALIZATION ---
-    setupGridLayout();
-    initializePuzzle();
+    // Wait for the image to load before initializing the puzzle pieces
+    const tempImg = new Image();
+    tempImg.src = `/output/piece_0_0.png`;
+    tempImg.onload = () => {
+        const aspectRatio = tempImg.height / tempImg.width;
+        PIECE_HEIGHT = PIECE_WIDTH * aspectRatio;
+        
+        // Now that we have all sizes, set up the grid and create the pieces
+        puzzleBoard.style.width = `${COLS * PIECE_WIDTH}px`;
+        puzzleBoard.style.height = `${ROWS * PIECE_HEIGHT}px`;
+        puzzleBoard.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+        puzzleBoard.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
+        piecesTray.style.gridTemplateColumns = `repeat(2, ${PIECE_WIDTH}px)`;
+
+        initializePuzzle();
+    };
 });
