@@ -4,9 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jigsaw Puzzle</title>
-    <!-- Link to our CSS files -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/puzzle.css') }}">
+    <!-- NEW: Immediate reload check script -->
+    <script>
+        const navEntries = performance.getEntriesByType("navigation");
+        if (navEntries.length > 0 && navEntries[0].type === 'reload') {
+            window.location.href = '/';
+        } else if (performance.navigation && performance.navigation.type === 1) {
+            window.location.href = '/';
+        }
+    </script>
 </head>
 <body>
     <h1>Jigsaw Puzzle</h1>
@@ -38,6 +45,9 @@
         data-rows="{{ rows }}"
         data-cols="{{ cols }}"
         data-image-filename="{{ image_filename }}"
+        data-pieces-metadata="{{ pieces_metadata }}"
+        data-image-width="{{ image_width }}"
+        data-image-height="{{ image_height }}"
         type="module"
     ></script>
 </body>

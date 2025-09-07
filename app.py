@@ -1,16 +1,18 @@
 import os
+import json
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 from werkzeug.utils import secure_filename
-from slicer import slice_image # Import our function from slicer.py
+from slicer import slice_image
 
 # Initialize the Flask application
 app = Flask(__name__)
 
 # --- Configuration ---
-# Define the path for user-uploaded images
-UPLOAD_FOLDER = 'uploads'
-# Define the path for the generated puzzle pieces
-OUTPUT_FOLDER = 'output'
+# FIX: Use absolute paths for folder configuration
+basedir = os.path.abspath(os.path.dirname(__file__))
+UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
+OUTPUT_FOLDER = os.path.join(basedir, 'output')
+
 # Allowed file extensions for upload
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'heic'}
 
@@ -24,23 +26,21 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # --- Routes ---
-
 @app.route('/')
 def index():
-    """Renders the home page (index.html) with the upload form."""
+    # Clean up old puzzle pieces before starting a new session
+    if os.path.exists(app.config['OUTPUT_FOLDER']):
+        for f in os.listdir(app.config['OUTPUT_FOLDER']):
+            os.remove(os.path.join(app.config['OUTPUT_FOLDER'], f))
     return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    """Handles the image upload, slices it, and redirects to the puzzle page."""
     if 'image' not in request.files:
-        return redirect(request.url) # Redirect back if no file part
-    
+        return redirect(request.url)
     file = request.files['image']
-    
     if file.filename == '':
-        return redirect(request.url) # Redirect back if no file selected
-
+        return redirect(request.url)
     if file and allowed_file(file.filename):
         # Secure the filename to prevent directory traversal attacks
         filename = secure_filename(file.filename)
@@ -48,17 +48,32 @@ def upload_file():
         image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(image_path)
 
-        # Get rows and columns from the form
-        rows = int(request.form.get('rows', 4))
-        cols = int(request.form.get('cols', 4))
+        try:
+            rows = int(request.form.get('rows', 4))
+            cols = int(request.form.get('cols', 4))
 
-        # Call our slicer function to process the image
-        slice_image(image_path, app.config['OUTPUT_FOLDER'], rows, cols)
+            # FIX: Correct the argument order to match the slicer.py function definition
+            pieces_metadata, img_width, img_height = slice_image(
+                image_path=image_path, 
+                output_dir=app.config['OUTPUT_FOLDER'], 
+                rows=rows, 
+                cols=cols
+            )
 
-        # --- Updated: Pass the original filename to the puzzle route ---
-        return redirect(url_for('puzzle', rows=rows, cols=cols, filename=filename))
-
-    return redirect(request.url) # Redirect if file type is not allowed
+            # Pass all data to the puzzle template
+            return render_template('puzzle.html', 
+                                   rows=rows, 
+                                   cols=cols, 
+                                   image_filename=filename,
+                                   pieces_metadata=json.dumps(pieces_metadata),
+                                   image_width=img_width,      # NEW
+                                   image_height=img_height)    # NEW
+        except Exception as e:
+            # Handle potential errors during slicing
+            print(f"Error processing image: {e}")
+            return redirect(url_for('index'))
+    
+    return redirect(url_for('index')) # Redirect if file type is not allowed
 
 # --- Updated: The puzzle route now accepts the filename ---
 @app.route('/puzzle/<int:rows>/<int:cols>/<path:filename>')

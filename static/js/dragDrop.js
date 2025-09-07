@@ -1,33 +1,37 @@
 import { checkPuzzleCompletion } from './script.js';
 
 // --- STATE ---
-// A global variable to hold the piece being dragged. This is key to the fix.
 let draggedPiece = null;
+let offsetX = 0;
+let offsetY = 0;
+let highestZ = 100; // For stacking pieces
 
 // --- DRAG & DROP EVENT HANDLERS ---
 
 function handleDragStart(e) {
-    // Set the global variable to the element being dragged.
     draggedPiece = e.target;
     
-    // Use dataTransfer to signal a drag is happening, but the primary
-    // reference is our `draggedPiece` variable.
+    // Calculate the mouse offset within the piece
+    const rect = draggedPiece.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    // Bring the dragged piece to the top
+    highestZ++;
+    draggedPiece.style.zIndex = highestZ;
+
     e.dataTransfer.setData('text/plain', draggedPiece.id);
     e.dataTransfer.effectAllowed = 'move';
 
-    // --- FIX: Immediately detach the piece from the DOM ---
-    // This makes its original slot truly empty right away.
-    // We use a timeout to ensure this happens after the drag operation has officially started.
+    // Use a timeout to hide the original piece after the browser has created the drag image
     setTimeout(() => {
-        draggedPiece.style.display = 'none';
+        draggedPiece.style.opacity = '0.5';
     }, 0);
 }
 
 function handleDragEnd(e) {
-    // This event fires when the drag is over (dropped or cancelled).
-    // We make the piece visible again and clear our global reference.
     if (draggedPiece) {
-        draggedPiece.style.display = 'block';
+        draggedPiece.style.opacity = '1';
         draggedPiece = null;
     }
 }
@@ -37,36 +41,64 @@ function handleDragOver(e) {
 }
 
 /**
- * This is a factory function. It creates a universal handleDrop function.
+ * NEW: Coordinate-based drop handler factory.
  */
-export function createDropHandler(config) {
-    const { piecesTray } = config;
+export function createDropHandler(config, scale) { // MODIFIED: Accept scale
+    const { puzzleBoard, piecesTray, imageWidth, imageHeight, ROWS, COLS } = config;
+    const SNAP_RADIUS = 30; // How close in pixels to snap
 
     return function handleDrop(e) {
         e.preventDefault();
-        if (!draggedPiece) return; // If nothing is being dragged, do nothing.
+        if (!draggedPiece) return;
 
-        let dropTarget = e.target;
-        let destinationContainer;
+        const boardRect = puzzleBoard.getBoundingClientRect();
+        const dropX = e.clientX;
+        const dropY = e.clientY;
 
-        // Determine the actual container we are dropping into.
-        if (dropTarget.classList.contains('puzzle-piece')) {
-            destinationContainer = dropTarget.parentElement;
-        } else if (dropTarget.classList.contains('piece-slot') || dropTarget.id === 'pieces-tray') {
-            destinationContainer = dropTarget;
+        // Check if the drop is within the puzzle board area
+        if (dropX > boardRect.left && dropX < boardRect.right && dropY > boardRect.top && dropY < boardRect.bottom) {
+            // --- Dropping on the Board ---
+            puzzleBoard.appendChild(draggedPiece);
+
+            // FIX: Use the original offsetX/Y from handleDragStart, not a recalculated one.
+            // This correctly calculates the piece's top-left corner relative to the board.
+            let newX = e.clientX - boardRect.left - offsetX;
+            let newY = e.clientY - boardRect.top - offsetY;
+
+            // Get the piece's correct final position and scale it
+            const finalX = parseInt(draggedPiece.dataset.finalX) * scale;
+            const finalY = parseInt(draggedPiece.dataset.finalY) * scale;
+
+            // Check distance for snapping
+            const distance = Math.sqrt(Math.pow(newX - finalX, 2) + Math.pow(newY - finalY, 2));
+
+            if (distance < SNAP_RADIUS) {
+                // Snap to place (using scaled coordinates)
+                draggedPiece.style.left = `${finalX}px`;
+                draggedPiece.style.top = `${finalY}px`;
+                draggedPiece.style.transform = 'rotate(0deg)';
+                draggedPiece.draggable = false;
+                draggedPiece.classList.add('is-placed');
+                checkPuzzleCompletion(config);
+            } else {
+                // Drop in place
+                draggedPiece.style.left = `${newX}px`;
+                draggedPiece.style.top = `${newY}px`;
+                draggedPiece.style.transform = 'rotate(0deg)';
+            }
         } else {
-            return; // Invalid drop target
-        }
+            // --- Dropping back on the Tray ---
+            piecesTray.appendChild(draggedPiece);
+            const trayRect = piecesTray.getBoundingClientRect();
+            const pieceRect = draggedPiece.getBoundingClientRect();
 
-        // --- Simplified Logic based on your rules ---
-        if (destinationContainer.id === 'pieces-tray') {
-            destinationContainer.appendChild(draggedPiece);
-        } else if (destinationContainer.classList.contains('piece-slot') && destinationContainer.children.length === 0) {
-            destinationContainer.appendChild(draggedPiece);
-        }
+            // Give it a new random position in the tray
+            const randomTop = Math.random() * (trayRect.height - pieceRect.height);
+            const randomLeft = Math.random() * (trayRect.width - pieceRect.width);
 
-        // After any valid move, check if the puzzle is complete.
-        checkPuzzleCompletion(config);
+            draggedPiece.style.top = `${randomTop}px`;
+            draggedPiece.style.left = `${randomLeft}px`;
+        }
     }
 }
 
@@ -76,9 +108,10 @@ export function createDropHandler(config) {
 export function addDragDropListeners(element, handleDrop) {
     if (element.classList.contains('puzzle-piece')) {
         element.addEventListener('dragstart', handleDragStart);
-        element.addEventListener('dragend', handleDragEnd); // Add the dragend listener
+        element.addEventListener('dragend', handleDragEnd);
     }
-    if (element.classList.contains('piece-slot') || element.id === 'pieces-tray') {
+    // The board and tray are the primary drop targets
+    if (element.id === 'puzzle-board' || element.id === 'pieces-tray') {
         element.addEventListener('dragover', handleDragOver);
         element.addEventListener('drop', handleDrop);
     }

@@ -22,7 +22,7 @@ def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
         # Open the image
         img = Image.open(image_path)
 
-        # --- New: Resize the image to fit within a bounding box ---
+        # --- PRESERVED: Resize the image to fit within a bounding box ---
         max_dimension = 800
         original_width, original_height = img.size
 
@@ -41,8 +41,9 @@ def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
             
             # Resize the image using a high-quality downsampling filter
             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-        # --- End of new section ---
+        # --- End of preserved section ---
 
+        # Get the final dimensions (which might be the resized dimensions)
         img_width, img_height = img.size
 
         # Calculate the width and height of each piece from the *resized* image
@@ -51,6 +52,8 @@ def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
 
         # Create the output directory if it doesn't exist
         Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+        pieces_metadata = [] # List to hold piece metadata
 
         # Use nested loops to iterate through the grid
         for r in range(rows):
@@ -80,8 +83,16 @@ def slice_image(image_path: str, output_dir: str, rows: int, cols: int):
                 # Save the beveled piece with the original name
                 piece_filename = f"piece_{r}_{c}.png"
                 piece.save(os.path.join(output_dir, piece_filename))
-        
-        print(f"Successfully sliced image into {rows * cols} pieces (beveled and flat).")
+
+                # Store metadata for this piece based on the final dimensions
+                pieces_metadata.append({
+                    "id": f"piece_{r}_{c}",
+                    "final_x": left,
+                    "final_y": top
+                })
+
+        # Return the metadata AND the final dimensions of the processed image
+        return pieces_metadata, img_width, img_height
 
     except FileNotFoundError:
         print(f"Error: The file was not found at '{image_path}'")

@@ -1,78 +1,88 @@
 import { createDropHandler, addDragDropListeners } from './dragDrop.js';
+import { calculateLayout } from './layout.js'; // NEW: Import layout helper
 
 /**
- * Calculates piece and board sizes and creates all puzzle elements.
+ * Sets up the puzzle based on coordinate data.
  */
 export function setupPuzzle(config) {
-    const { ROWS, COLS, gameContainer, puzzleBoard, piecesTray } = config;
+    const { puzzleBoard, piecesTray, piecesMetadata, imageWidth, imageHeight, ROWS, COLS, IMAGE_FILENAME } = config;
 
-    const tempImg = new Image();
-    tempImg.src = `/output/piece_0_0.png`;
-    tempImg.onload = () => {
-        const aspectRatio = tempImg.height / tempImg.width;
+    // --- NEW: Calculate responsive layout ---
+    const { boardWidth, boardHeight } = calculateLayout(imageWidth, imageHeight);
+    const scale = boardWidth / imageWidth; // The scale factor we applied
 
-        // --- Sizing Calculation (remains the same) ---
-        const availableWidth = (gameContainer.offsetWidth / 2) - 40;
-        const availableHeight = window.innerHeight - 150;
-        const widthConstrainedPieceWidth = availableWidth / COLS;
-        const widthConstrainedTotalHeight = ROWS * (widthConstrainedPieceWidth * aspectRatio);
-        const heightConstrainedPieceHeight = availableHeight / ROWS;
-        const heightConstrainedPieceWidth = heightConstrainedPieceHeight / aspectRatio;
+    // Clear any existing content
+    const completionMessage = piecesTray.querySelector('#completion-message');
+    puzzleBoard.innerHTML = '';
+    piecesTray.innerHTML = '';
+    if (completionMessage) {
+        piecesTray.appendChild(completionMessage);
+    }
 
-        let PIECE_WIDTH, PIECE_HEIGHT;
-        if (widthConstrainedTotalHeight <= availableHeight) {
-            PIECE_WIDTH = widthConstrainedPieceWidth;
-        } else {
-            PIECE_WIDTH = heightConstrainedPieceWidth;
-        }
-        PIECE_HEIGHT = PIECE_WIDTH * aspectRatio;
-        
-        // --- Apply Sizes and Create Elements ---
-        const totalWidth = COLS * PIECE_WIDTH;
-        const totalHeight = ROWS * PIECE_HEIGHT;
+    // Set the puzzle board dimensions to the new calculated size
+    puzzleBoard.style.width = `${boardWidth}px`;
+    puzzleBoard.style.height = `${boardHeight}px`;
 
-        [puzzleBoard, piecesTray].forEach(el => {
-            el.style.width = `${totalWidth}px`;
-            el.style.height = `${totalHeight}px`;
-            el.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
-            el.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
-        });
+    // Set the pieces tray to be the same size
+    piecesTray.style.width = `${boardWidth}px`;
+    piecesTray.style.height = `${boardHeight}px`;
 
-        // Create the universal drop handler
-        const handleDrop = createDropHandler(config);
-        // Make the tray itself a drop target
-        addDragDropListeners(piecesTray, handleDrop);
+    // --- Create the final image overlay and add to board ---
+    const finalImage = new Image();
+    finalImage.src = `/uploads/${IMAGE_FILENAME}`;
+    finalImage.className = 'final-image-overlay';
+    puzzleBoard.appendChild(finalImage);
 
-        // Create and add pieces to the tray
-        let pieces = [];
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                pieces.push(`piece_${r}_${c}`);
-            }
-        }
-        pieces.sort(() => Math.random() - 0.5);
+    // --- Add Cheat Mode Logic here ---
+    const cheatToggle = document.getElementById('cheat-toggle');
+    const cheatImage = new Image();
+    cheatImage.src = `/uploads/${IMAGE_FILENAME}`;
+    cheatImage.className = 'cheat-image-bg';
+    puzzleBoard.appendChild(cheatImage);
 
-        for (const pieceId of pieces) {
-            const piece = document.createElement('img');
-            piece.src = `/output/${pieceId}.png`;
-            piece.id = pieceId;
-            piece.className = 'puzzle-piece';
-            piece.draggable = true; // Pieces are always draggable
-            piece.style.width = `${PIECE_WIDTH}px`;
-            piece.style.height = `${PIECE_HEIGHT}px`;
-            addDragDropListeners(piece, handleDrop);
-            piecesTray.appendChild(piece);
-        }
+    // Reset checkbox state and board class on new puzzle setup
+    cheatToggle.checked = false;
+    puzzleBoard.classList.remove('cheat-mode-on');
 
-        // Create and add slots to the board
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                const slot = document.createElement('div');
-                slot.id = `piece_${r}_${c}`; 
-                slot.className = 'piece-slot';
-                addDragDropListeners(slot, handleDrop);
-                puzzleBoard.appendChild(slot);
-            }
-        }
-    };
+    cheatToggle.addEventListener('change', () => {
+        puzzleBoard.classList.toggle('cheat-mode-on');
+    });
+
+    // Create the drop handler once, passing the new scale factor
+    const handleDrop = createDropHandler(config, scale);
+
+    // Add drop listeners to the board and tray
+    addDragDropListeners(puzzleBoard, handleDrop);
+    addDragDropListeners(piecesTray, handleDrop);
+
+    // Calculate scaled piece dimensions
+    const pieceWidth = boardWidth / COLS;
+    const pieceHeight = boardHeight / ROWS;
+
+    // Create pieces from metadata and add to tray
+    piecesMetadata.forEach(pieceData => {
+        const piece = document.createElement('img');
+        piece.id = pieceData.id;
+        piece.src = `/output/${pieceData.id}.png`;
+        piece.className = 'puzzle-piece';
+        piece.draggable = true;
+
+        // Set the piece's dimensions based on the new scale
+        piece.style.width = `${pieceWidth}px`;
+        piece.style.height = `${pieceHeight}px`;
+
+        // Store the original final coordinates on the piece itself
+        piece.dataset.finalX = pieceData.final_x;
+        piece.dataset.finalY = pieceData.final_y;
+
+        // Randomize position within the tray
+        const randomTop = Math.random() * (boardHeight - pieceHeight);
+        const randomLeft = Math.random() * (boardWidth - pieceWidth);
+
+        piece.style.top = `${randomTop}px`;
+        piece.style.left = `${randomLeft}px`;
+
+        addDragDropListeners(piece, handleDrop);
+        piecesTray.appendChild(piece);
+    });
 }

@@ -2,10 +2,9 @@
 #puzzle-board {
     border: 5px solid #333;
     background-color: #ccc;
-    display: grid;
-    /* Add position relative to be a container for the cheat image */
     position: relative; 
-    transition: border-color 0.5s ease-in-out, background-color 0.5s ease-in-out, gap 0.5s ease-in-out;
+    flex-shrink: 0; /* Prevent the board from shrinking if window is too small */
+    transition: border-color 0.5s ease-in-out, background-color 0.5s ease-in-out;
 }
 
 /* New: Styles for the puzzle controls area */
@@ -45,15 +44,8 @@
 #pieces-tray {
     border: 2px dashed #666;
     padding: 10px;
-    display: grid;
-    gap: 10px;
-    position: relative; /* Positioning context for the completion message */
-    /* Center the pieces within their grid cells */
-    justify-items: center;
-    align-items: center;
-    /* FIX: Center the entire grid of pieces within the tray container */
-    justify-content: center;
-    align-content: center;
+    position: relative; /* Positioning context for pieces inside */
+    flex-shrink: 0; /* Prevent the tray from shrinking */
 }
 
 /* Placeholder for used pieces in the tray */
@@ -75,14 +67,55 @@
 /* This class is for the actual, draggable image pieces. */
 .puzzle-piece {
     cursor: grab;
-    transition: opacity 0.8s ease-in-out;
+    /* NEW: Add absolute positioning for free-form layout */
+    position: absolute;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    z-index: 10; /* Default z-index for pieces */
 }
 
 .puzzle-piece:active {
     cursor: grabbing;
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
+/* NEW: Style for pieces that are correctly placed */
+.puzzle-piece.is-placed {
+    box-shadow: none;
+    z-index: 5; /* Lower z-index so they sit behind active pieces */
+    pointer-events: none; /* Make them un-clickable */
 }
 
 /* --- Styles for Completion --- */
+
+/* NEW: The overlay for the final seamless image */
+.final-image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease-in-out;
+    z-index: 200; /* High z-index to cover all pieces */
+}
+
+.final-image-overlay.visible {
+    opacity: 1;
+}
+
+/* NEW: When puzzle is complete, fade out the board border */
+#game-container.puzzle-complete #puzzle-board {
+    border-color: transparent;
+}
+
+/* NEW: When puzzle is complete, show the completion message */
+#game-container.puzzle-complete #completion-message {
+    opacity: 1;
+    pointer-events: auto;
+}
 
 #completion-message {
     position: absolute;
@@ -122,18 +155,37 @@
     background-color: transparent;
 }
 
-.final-image-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
+#game-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
     width: 100%;
-    height: 100%;
-    opacity: 0;
-    transition: opacity 0.8s ease-in-out;
-    /* FIX: Ensure the final image is on top of everything */
-    z-index: 3;
+    padding: 1em;
 }
 
-.final-image-overlay.visible {
-    opacity: 1;
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 1em;
+    /* NEW: Use flexbox to center the page content */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* NEW: Style for the main page title */
+h1 {
+    color: #333;
+    margin-bottom: 0.5em;
+}
+
+.puzzle-controls {
+    /* This block will now be centered by the body's 'align-items' rule */
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-size: 1.1em;
+    margin-bottom: 1em;
 }

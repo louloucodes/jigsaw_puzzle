@@ -1,59 +1,40 @@
 import { setupPuzzle } from './puzzleSetup.js';
 
 /**
- * NEW: Checks the entire board to see if all pieces are in their correct slots.
- * This is called after every successful drop.
+ * Checks if all puzzle pieces are in their correct final positions.
  */
 export function checkPuzzleCompletion(config) {
-    const { ROWS, COLS, puzzleBoard } = config;
-    
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const slotId = `piece_${r}_${c}`;
-            const slot = document.getElementById(slotId);
-            
-            // If a slot is empty or contains the wrong piece, the puzzle is not complete.
-            if (slot.children.length === 0 || slot.children[0].id !== slotId) {
-                return; // Exit early, puzzle is not solved.
-            }
-        }
-    }
+    const { piecesMetadata } = config;
+    const placedPieces = document.querySelectorAll('.puzzle-piece.is-placed');
 
-    // If the loop completes, all pieces are in the correct place.
-    handlePuzzleCompletion(config);
+    if (placedPieces.length === piecesMetadata.length) {
+        handlePuzzleCompletion(config);
+    }
 }
 
 /**
- * Handles the visual changes when the puzzle is successfully completed.
+ * Handles the visual celebration when the puzzle is completed.
  */
-function handlePuzzleCompletion(config) {
-    console.log("Congratulations! Puzzle Complete!");
-    config.gameContainer.classList.add('puzzle-complete');
-    
-    const finalImage = new Image();
-    finalImage.src = `/uploads/${config.IMAGE_FILENAME}`;
-    finalImage.className = 'final-image-overlay';
+export function handlePuzzleCompletion(config) {
+    const { gameContainer, puzzleBoard } = config;
 
-    config.puzzleBoard.style.position = 'relative';
-    config.puzzleBoard.appendChild(finalImage);
+    // Find the overlay image we created during setup
+    const finalImage = puzzleBoard.querySelector('.final-image-overlay');
 
-    setTimeout(() => {
+    // Add classes to trigger the completion animations
+    if (finalImage) {
         finalImage.classList.add('visible');
-    }, 10);
+    }
+    gameContainer.classList.add('puzzle-complete');
 
-    // Make all pieces non-draggable
+    // Make all pieces non-draggable to prevent interference
     const pieces = document.querySelectorAll('.puzzle-piece');
     pieces.forEach(p => p.draggable = false);
 }
 
 // --- Main Execution ---
 document.addEventListener('DOMContentLoaded', function() {
-    // --- FIX: More robust check for page reload ---
-    const navEntries = performance.getEntriesByType("navigation");
-    if (navEntries.length > 0 && navEntries[0].type === 'reload') {
-        window.location.href = '/';
-        return; // Stop further execution
-    }
+    // The reload check has already been performed.
 
     // --- CONFIGURATION ---
     const configScript = document.getElementById('puzzle-config');
@@ -64,21 +45,13 @@ document.addEventListener('DOMContentLoaded', function() {
             ROWS: parseInt(configScript.dataset.rows),
             COLS: parseInt(configScript.dataset.cols),
             IMAGE_FILENAME: configScript.dataset.imageFilename,
+            piecesMetadata: JSON.parse(configScript.dataset.piecesMetadata),
+            imageWidth: parseInt(configScript.dataset.imageWidth),
+            imageHeight: parseInt(configScript.dataset.imageHeight),
             gameContainer: document.getElementById('game-container'),
             puzzleBoard: document.getElementById('puzzle-board'),
             piecesTray: document.getElementById('pieces-tray')
         };
-        
-        // --- Cheat Mode Logic ---
-        const cheatToggle = document.getElementById('cheat-toggle');
-        const cheatImage = new Image();
-        cheatImage.src = `/uploads/${config.IMAGE_FILENAME}`;
-        cheatImage.className = 'cheat-image-bg';
-        config.puzzleBoard.appendChild(cheatImage);
-
-        cheatToggle.addEventListener('change', () => {
-            config.puzzleBoard.classList.toggle('cheat-mode-on');
-        });
         
         // Start the puzzle setup process
         setupPuzzle(config);
