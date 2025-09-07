@@ -1,3 +1,4 @@
+# 2025-09-07: What comes next
 > I am really happy with all of this. I have a question though...as we continue to add more features, I am concerned about code maintainability. Are we at a point that we need to split up functionality into smaller files? Or will that come later with more features?
 
 That's an excellent question, and it's a sign of a great developer to be thinking about maintainability this early on. It's a crucial topic.
