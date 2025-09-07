@@ -1,23 +1,49 @@
 import { setupPuzzle } from './puzzleSetup.js';
 
 /**
- * Handles the visual changes when the puzzle is successfully completed.
- * Exported so it can be called from the dragDrop module.
+ * NEW: Checks the entire board to see if all pieces are in their correct slots.
+ * This is called after every successful drop.
  */
-export function handlePuzzleCompletion(puzzleBoard, imageFilename) {
+export function checkPuzzleCompletion(config) {
+    const { ROWS, COLS, puzzleBoard } = config;
+    
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            const slotId = `piece_${r}_${c}`;
+            const slot = document.getElementById(slotId);
+            
+            // If a slot is empty or contains the wrong piece, the puzzle is not complete.
+            if (slot.children.length === 0 || slot.children[0].id !== slotId) {
+                return; // Exit early, puzzle is not solved.
+            }
+        }
+    }
+
+    // If the loop completes, all pieces are in the correct place.
+    handlePuzzleCompletion(config);
+}
+
+/**
+ * Handles the visual changes when the puzzle is successfully completed.
+ */
+function handlePuzzleCompletion(config) {
     console.log("Congratulations! Puzzle Complete!");
-    document.getElementById('game-container').classList.add('puzzle-complete');
+    config.gameContainer.classList.add('puzzle-complete');
     
     const finalImage = new Image();
-    finalImage.src = `/uploads/${imageFilename}`;
+    finalImage.src = `/uploads/${config.IMAGE_FILENAME}`;
     finalImage.className = 'final-image-overlay';
 
-    puzzleBoard.style.position = 'relative';
-    puzzleBoard.appendChild(finalImage);
+    config.puzzleBoard.style.position = 'relative';
+    config.puzzleBoard.appendChild(finalImage);
 
     setTimeout(() => {
         finalImage.classList.add('visible');
     }, 10);
+
+    // Make all pieces non-draggable
+    const pieces = document.querySelectorAll('.puzzle-piece');
+    pieces.forEach(p => p.draggable = false);
 }
 
 // --- Main Execution ---

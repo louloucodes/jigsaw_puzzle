@@ -1,68 +1,85 @@
-import { handlePuzzleCompletion } from './script.js';
+import { checkPuzzleCompletion } from './script.js';
 
 // --- STATE ---
-// This needs to be managed here or passed around. Let's keep it modular.
-let correctlyPlacedPieces = 0;
+// A global variable to hold the piece being dragged. This is key to the fix.
+let draggedPiece = null;
 
 // --- DRAG & DROP EVENT HANDLERS ---
 
 function handleDragStart(e) {
-    e.dataTransfer.setData('text/plain', e.target.id);
+    // Set the global variable to the element being dragged.
+    draggedPiece = e.target;
+    
+    // Use dataTransfer to signal a drag is happening, but the primary
+    // reference is our `draggedPiece` variable.
+    e.dataTransfer.setData('text/plain', draggedPiece.id);
+    e.dataTransfer.effectAllowed = 'move';
+
+    // --- FIX: Immediately detach the piece from the DOM ---
+    // This makes its original slot truly empty right away.
+    // We use a timeout to ensure this happens after the drag operation has officially started.
+    setTimeout(() => {
+        draggedPiece.style.display = 'none';
+    }, 0);
+}
+
+function handleDragEnd(e) {
+    // This event fires when the drag is over (dropped or cancelled).
+    // We make the piece visible again and clear our global reference.
+    if (draggedPiece) {
+        draggedPiece.style.display = 'block';
+        draggedPiece = null;
+    }
 }
 
 function handleDragOver(e) {
-    e.preventDefault();
+    e.preventDefault(); // Necessary to allow dropping.
 }
 
 /**
- * This is a factory function. It creates the handleDrop function
- * with all the necessary context (like piece sizes and puzzle dimensions).
+ * This is a factory function. It creates a universal handleDrop function.
  */
 export function createDropHandler(config) {
-    const { ROWS, COLS, PIECE_WIDTH, PIECE_HEIGHT, puzzleBoard } = config;
+    const { piecesTray } = config;
 
     return function handleDrop(e) {
         e.preventDefault();
-        
-        const draggedPieceId = e.dataTransfer.getData('text/plain');
-        const draggedPiece = document.getElementById(draggedPieceId);
-        const dropTarget = e.target;
+        if (!draggedPiece) return; // If nothing is being dragged, do nothing.
 
-        // Check if the drop is valid
-        if (dropTarget.className === 'piece-slot' && dropTarget.id === draggedPieceId) {
-            
-            // If piece came from the tray, leave a placeholder
-            if (draggedPiece.parentElement.id === 'pieces-tray') {
-                const placeholder = document.createElement('div');
-                placeholder.className = 'tray-placeholder';
-                placeholder.style.width = `${PIECE_WIDTH}px`;
-                placeholder.style.height = `${PIECE_HEIGHT}px`;
-                draggedPiece.parentElement.insertBefore(placeholder, draggedPiece);
-            }
-            
-            draggedPiece.draggable = false;
-            dropTarget.innerHTML = '';
-            dropTarget.appendChild(draggedPiece);
+        let dropTarget = e.target;
+        let destinationContainer;
 
-            correctlyPlacedPieces++;
-            if (correctlyPlacedPieces === ROWS * COLS) {
-                handlePuzzleCompletion(puzzleBoard, config.IMAGE_FILENAME);
-            }
+        // Determine the actual container we are dropping into.
+        if (dropTarget.classList.contains('puzzle-piece')) {
+            destinationContainer = dropTarget.parentElement;
+        } else if (dropTarget.classList.contains('piece-slot') || dropTarget.id === 'pieces-tray') {
+            destinationContainer = dropTarget;
+        } else {
+            return; // Invalid drop target
         }
+
+        // --- Simplified Logic based on your rules ---
+        if (destinationContainer.id === 'pieces-tray') {
+            destinationContainer.appendChild(draggedPiece);
+        } else if (destinationContainer.classList.contains('piece-slot') && destinationContainer.children.length === 0) {
+            destinationContainer.appendChild(draggedPiece);
+        }
+
+        // After any valid move, check if the puzzle is complete.
+        checkPuzzleCompletion(config);
     }
 }
 
 /**
- * Attaches the drag-and-drop listeners to a piece.
+ * Attaches the necessary drag-and-drop listeners to elements.
  */
-export function addDragListeners(piece) {
-    piece.addEventListener('dragstart', handleDragStart);
-}
-
-/**
- * Attaches the drop listeners to a slot.
- */
-export function addDropListeners(slot, handleDrop) {
-    slot.addEventListener('dragover', handleDragOver);
-    slot.addEventListener('drop', handleDrop);
+export function addDragDropListeners(element, handleDrop) {
+    if (element.classList.contains('puzzle-piece')) {
+        element.addEventListener('dragstart', handleDragStart);
+        element.addEventListener('dragend', handleDragEnd); // Add the dragend listener
+    }
+    if (element.classList.contains('piece-slot') || element.id === 'pieces-tray') {
+        element.addEventListener('dragover', handleDragOver);
+        element.addEventListener('drop', handleDrop);
+    }
 }

@@ -1,4 +1,4 @@
-import { addDragListeners, addDropListeners, createDropHandler } from './dragDrop.js';
+import { createDropHandler, addDragDropListeners } from './dragDrop.js';
 
 /**
  * Calculates piece and board sizes and creates all puzzle elements.
@@ -11,7 +11,7 @@ export function setupPuzzle(config) {
     tempImg.onload = () => {
         const aspectRatio = tempImg.height / tempImg.width;
 
-        // --- Sizing Calculation ---
+        // --- Sizing Calculation (remains the same) ---
         const availableWidth = (gameContainer.offsetWidth / 2) - 40;
         const availableHeight = window.innerHeight - 150;
         const widthConstrainedPieceWidth = availableWidth / COLS;
@@ -31,7 +31,6 @@ export function setupPuzzle(config) {
         const totalWidth = COLS * PIECE_WIDTH;
         const totalHeight = ROWS * PIECE_HEIGHT;
 
-        // Configure board and tray
         [puzzleBoard, piecesTray].forEach(el => {
             el.style.width = `${totalWidth}px`;
             el.style.height = `${totalHeight}px`;
@@ -39,8 +38,10 @@ export function setupPuzzle(config) {
             el.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
         });
 
-        // Create the drop handler with the calculated sizes
-        const handleDrop = createDropHandler({ ...config, PIECE_WIDTH, PIECE_HEIGHT, puzzleBoard });
+        // Create the universal drop handler
+        const handleDrop = createDropHandler(config);
+        // Make the tray itself a drop target
+        addDragDropListeners(piecesTray, handleDrop);
 
         // Create and add pieces to the tray
         let pieces = [];
@@ -56,10 +57,10 @@ export function setupPuzzle(config) {
             piece.src = `/output/${pieceId}.png`;
             piece.id = pieceId;
             piece.className = 'puzzle-piece';
-            piece.draggable = true;
+            piece.draggable = true; // Pieces are always draggable
             piece.style.width = `${PIECE_WIDTH}px`;
             piece.style.height = `${PIECE_HEIGHT}px`;
-            addDragListeners(piece);
+            addDragDropListeners(piece, handleDrop);
             piecesTray.appendChild(piece);
         }
 
@@ -69,7 +70,7 @@ export function setupPuzzle(config) {
                 const slot = document.createElement('div');
                 slot.id = `piece_${r}_${c}`; 
                 slot.className = 'piece-slot';
-                addDropListeners(slot, handleDrop);
+                addDragDropListeners(slot, handleDrop);
                 puzzleBoard.appendChild(slot);
             }
         }
