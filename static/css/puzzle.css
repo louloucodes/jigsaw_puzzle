@@ -48,6 +48,12 @@
     display: grid;
     gap: 10px;
     position: relative; /* Positioning context for the completion message */
+    /* Center the pieces within their grid cells */
+    justify-items: center;
+    align-items: center;
+    /* FIX: Center the entire grid of pieces within the tray container */
+    justify-content: center;
+    align-content: center;
 }
 
 /* Placeholder for used pieces in the tray */
