@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- CONFIGURATION ---
-    // These should match the output of your slicer.py script
-    const ROWS = 4;
-    const COLS = 4;
+    // Get config from the script tag's data attributes
+    const configScript = document.getElementById('puzzle-config');
+    const ROWS = parseInt(configScript.dataset.rows);
+    const COLS = parseInt(configScript.dataset.cols);
     const PIECE_WIDTH = 100; // Should match target_piece_width in slicer.py
 
     // --- DOM ELEMENTS ---

@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jigsaw Puzzle</title>
-    <!-- Link to our future CSS file -->
-    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Link to our CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
@@ -19,7 +19,12 @@
     <!-- This div will hold the scrambled puzzle pieces -->
     <div id="pieces-tray"></div>
 
-    <!-- Link to our future JavaScript file -->
-    <script src="/static/js/script.js"></script>
+    <!-- Pass Flask variables to JavaScript by embedding them in data attributes -->
+    <script 
+        id="puzzle-config"
+        src="{{ url_for('static', filename='js/script.js') }}"
+        data-rows="{{ rows }}"
+        data-cols="{{ cols }}"
+    ></script>
 </body>
 </html>
