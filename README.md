@@ -48,7 +48,7 @@ jigsaw_puzzles/
     source venv/bin/activate
 
     # Or using Conda
-    conda create --name jigsaw python=3.9
+    conda create --name jigsaw python=3.13.2
     conda activate jigsaw
     ```
 
